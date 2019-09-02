@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -17,6 +18,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,8 +33,11 @@ import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.youtube.player.YouTubeInitializationResult;
@@ -60,6 +65,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import at.huber.youtubeExtractor.VideoMeta;
+import at.huber.youtubeExtractor.YouTubeExtractor;
+import at.huber.youtubeExtractor.YtFile;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -406,12 +414,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             try {
                 YouTube.Search.List search = mService.search().list("id,snippet");
                 search.setKey(getString(R.string.client_id));
-                String text = "9EwN9rEO9ps EU5JlkRYPh8";
+                String text = "9EwN9rEO9ps"; //这是一个videoid
                 if (!TextUtils.isEmpty(editText.getText().toString().trim())) {
                     text = editText.getText().toString().trim();
                 }
                 search.setQ(text);
-                search.setType("video");
+                search.setType("video"); //搜索的类型
+                //返回的数据有哪些，根据需求自己设定
                 search.setFields("items(id/kind,id/videoId,snippet/title,snippet/thumbnails/default/url)");
                 search.setMaxResults(25L);
 //                search.setRelevanceLanguage("zh-Hans");
@@ -420,9 +429,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 for (SearchResult result : response.getItems()) {
                     list.add(result.getId().toString());
                     ResourceId resourceId = result.getId();
-//                    Etag = null, kind = null, id = {"kind":"youtube#video","videoId":"XDFaA9ujKwg"}, videoId= XDFaA9ujKwg, ChannelId = null
-//                    Snippet: ChannelId = null, ChannelTitle = null, Description = null, Title = 赵浴辰《可乐》谢安琪演唱版, Thumbnails = {"default":{"url":"https://i.ytimg.com/vi/XDFaA9ujKwg/default.jpg"}}, LiveBroadcastContent = null
-//                    Thumbnails Default: url = https://i.ytimg.com/vi/XDFaA9ujKwg/default.jpg, width = null, height = null
+                    //Etag = null, kind = null, id = {"kind":"youtube#video","videoId":"XDFaA9ujKwg"}, videoId= XDFaA9ujKwg, ChannelId = null
+                    //Snippet: ChannelId = null, ChannelTitle = null, Description = null, Title = 赵浴辰《可乐》谢安琪演唱版, Thumbnails = {"default":{"url":"https://i.ytimg.com/vi/XDFaA9ujKwg/default.jpg"}}, LiveBroadcastContent = null
+                    //Thumbnails Default: url = https://i.ytimg.com/vi/XDFaA9ujKwg/default.jpg, width = null, height = null
                     Log.i("result", "Etag = " + result.getEtag()
                             + ", kind = " + result.getKind()
                             + ", id = " + resourceId + ", videoId= " + resourceId.getVideoId() + ", ChannelId = " + resourceId.getChannelId());
@@ -525,29 +534,37 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 } else {
                     Toast.makeText(holder.iv_photo.getContext(), "YouTube失败", Toast.LENGTH_SHORT).show();
                 }
-//                new YouTubeExtractor(holder.iv_photo.getContext()) {
-//
-//                    @Override
-//                    protected void onExtractionComplete(SparseArray<YtFile> ytFiles, VideoMeta videoMeta) {
-//                        if (ytFiles != null) {
-//                            String url = null;
-//                            for (int i = 0, size = ytFiles.size(); i < size; i++) {
-//                                if (ytFiles.get(i) != null) {
-//                                    url = ytFiles.get(i).getUrl();
-////                                    Format = Format{itag=18, ext='mp4', height=360, fps=30, vCodec=null, aCodec=null, audioBitrate=96, isDashContainer=false, isHlsContent=false}, url = https://r1---sn-ipoxu-un5s.googlevideo.com/videoplayback?expire=1566921200&ei=kP1kXZXgMIfgqQGPnpFo&ip=61.222.32.25&id=o-AAUvz8eS3dUA_gxOjfWOjUSFTwnGnmD72ivVDa3La_1K&itag=18&source=youtube&requiressl=yes&mm=31%2C29&mn=sn-ipoxu-un5s%2Csn-un57sn7s&ms=au%2Crdu&mv=m&mvi=0&pl=24&initcwndbps=1163750&mime=video%2Fmp4&gir=yes&clen=21312193&ratebypass=yes&dur=359.862&lmt=1557569508280291&mt=1566899509&fvip=5&c=WEB&txp=5531432&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cmime%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&sig=ALgxI2wwRgIhAK1NJR5va9ENHMXRwxd6ZBTj_DeFCWfTiDmIPeOqkEk2AiEAmiP32W6w7jPRMnpmstel-Tsez-GfH7D3DSTPG4ddj20%3D&lsparams=mm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AHylml4wRQIhAInqtw-eNm9EI2nyArD-kUgmooqQxPF-rQlQhNZu0VumAiA5kw2w8hGLwf_CcZM5jOpvLlxAj-lu6UNL8KXwccg2LQ%3D%3D
-//                                    Log.i("result", "onExtractionComplete: Format = " + ytFiles.get(i).getFormat() + ", url = " + ytFiles.get(i).getUrl());
-//                                }
-//                            }
-//
-//                            if (!TextUtils.isEmpty(url)) {
-//                                Uri uri = Uri.parse(url);
-//                                MediaSource source = new ExtractorMediaSource.Factory(new DefaultHttpDataSourceFactory("exoplayer-codelab")).createMediaSource(uri);
-//                                player.prepare(source);
-//                            }
-//                        }
-//                    }
-//                }.extract("https://www.youtube.com/watch?v=" + data.get(i).getVideoID(), true, true);
+                onOtherExtractor(holder, i);
             });
+        }
+
+        //第三方解析工具
+        private void onOtherExtractor(@NonNull Holder holder, int i) {
+            //这个方法是异步请求
+            new YouTubeExtractor(holder.iv_photo.getContext()) {
+
+                @Override
+                protected void onExtractionComplete(SparseArray<YtFile> ytFiles, VideoMeta videoMeta) {
+                    if (ytFiles != null) {
+                        String url = null;
+                        //返回的结果中会有不同尺寸的视频，可以根据需要去选择
+                        for (int i = 0, size = ytFiles.size(); i < size; i++) {
+                            if (ytFiles.get(i) != null) {
+                                url = ytFiles.get(i).getUrl();
+                                //部分log： Format = Format{itag=18, ext='mp4', height=360, fps=30, vCodec=null, aCodec=null, audioBitrate=96, isDashContainer=false, isHlsContent=false}, url = https://r1---sn-ipoxu-un5s.googlevideo.com/videoplayback?expire=1566921200&ei=kP1kXZXgMIfgqQGPnpFo&ip=61.222.32.25&id=o-AAUvz8eS3dUA_gxOjfWOjUSFTwnGnmD72ivVDa3La_1K&itag=18&source=youtube&requiressl=yes&mm=31%2C29&mn=sn-ipoxu-un5s%2Csn-un57sn7s&ms=au%2Crdu&mv=m&mvi=0&pl=24&initcwndbps=1163750&mime=video%2Fmp4&gir=yes&clen=21312193&ratebypass=yes&dur=359.862&lmt=1557569508280291&mt=1566899509&fvip=5&c=WEB&txp=5531432&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cmime%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&sig=ALgxI2wwRgIhAK1NJR5va9ENHMXRwxd6ZBTj_DeFCWfTiDmIPeOqkEk2AiEAmiP32W6w7jPRMnpmstel-Tsez-GfH7D3DSTPG4ddj20%3D&lsparams=mm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AHylml4wRQIhAInqtw-eNm9EI2nyArD-kUgmooqQxPF-rQlQhNZu0VumAiA5kw2w8hGLwf_CcZM5jOpvLlxAj-lu6UNL8KXwccg2LQ%3D%3D
+                                Log.i("result", "onExtractionComplete: Format = " + ytFiles.get(i).getFormat() + ", url = " + ytFiles.get(i).getUrl());
+                            }
+                        }
+
+                        //根据需求选择不同尺寸的视频地址去播放，我这里随便选了一个
+                        if (!TextUtils.isEmpty(url)) {
+                            Uri uri = Uri.parse(url);
+                            MediaSource source = new ExtractorMediaSource.Factory(new DefaultHttpDataSourceFactory("exoplayer-codelab")).createMediaSource(uri);
+                            player.prepare(source);
+                        }
+                    }
+                }
+            }.extract("https://www.youtube.com/watch?v=" + data.get(i).getVideoID(), true, true);
         }
 
         @Override

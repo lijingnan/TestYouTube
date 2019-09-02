@@ -28,13 +28,13 @@
     <com.google.android.exoplayer2.ui.PlayerView
         android:id="@+id/playerView"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:visibility="gone"
+        android:layout_height="150dp"
         app:controller_layout_id="@layout/layout_controller" />
 
     <fragment
         android:id="@+id/youtube_fragment"
         android:name="com.google.android.youtube.player.YouTubePlayerFragment"
         android:layout_width="match_parent"
-        android:layout_height="200dp" />
+        android:layout_height="150dp"
+        android:layout_marginTop="2dp" />
 </LinearLayout>
