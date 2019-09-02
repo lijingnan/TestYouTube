@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".TestTouchEvent">
+
+    <com.nan.testyoutube.TestViewGroup
+        android:id="@+id/testViewGroup"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="#888888"
+        app:layout_constraintDimensionRatio="1"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.nan.testyoutube.TestView
+            android:id="@+id/testView"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:background="#00FF00" />
+    </com.nan.testyoutube.TestViewGroup>
+</android.support.constraint.ConstraintLayout>
