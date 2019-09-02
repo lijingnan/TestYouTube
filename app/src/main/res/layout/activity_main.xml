@@ -25,16 +25,27 @@
         android:layout_weight="1"
         tools:listitem="@layout/item" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="PlayerView：" />
+
     <com.google.android.exoplayer2.ui.PlayerView
         android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="150dp"
         app:controller_layout_id="@layout/layout_controller" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="YouTubePlayerFragment：" />
+
     <fragment
         android:id="@+id/youtube_fragment"
         android:name="com.google.android.youtube.player.YouTubePlayerFragment"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:layout_marginTop="2dp" />
+        android:layout_height="150dp" />
 </LinearLayout>

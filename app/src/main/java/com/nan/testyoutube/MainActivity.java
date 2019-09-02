@@ -414,7 +414,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             try {
                 YouTube.Search.List search = mService.search().list("id,snippet");
                 search.setKey(getString(R.string.client_id));
-                String text = "9EwN9rEO9ps"; //这是一个videoid
+                String text = "mp6E_avCnXc"; //这是一个videoid
                 if (!TextUtils.isEmpty(editText.getText().toString().trim())) {
                     text = editText.getText().toString().trim();
                 }
