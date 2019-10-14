@@ -1,10 +1,13 @@
-package com.nan.testyoutube;
+package com.nan.testyoutube.activity;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.nan.testyoutube.R;
+import com.nan.testyoutube.view.TestView;
+import com.nan.testyoutube.view.TestViewGroup;
 
 public class TestTouchEvent extends AppCompatActivity {
 

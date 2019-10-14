@@ -1,4 +1,4 @@
-package com.nan.testyoutube;
+package com.nan.testyoutube.activity;
 
 import android.Manifest;
 import android.accounts.AccountManager;
@@ -12,10 +12,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
@@ -28,14 +24,27 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
+import com.commit451.youtubeextractor.YouTubeExtractionResult;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
+import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.gms.common.ConnectionResult;
@@ -59,40 +68,53 @@ import com.google.api.services.youtube.model.ResourceId;
 import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.api.services.youtube.model.SearchResult;
 import com.google.api.services.youtube.model.Thumbnail;
+import com.google.api.services.youtube.model.Video;
+import com.google.api.services.youtube.model.VideoContentDetailsRegionRestriction;
+import com.google.api.services.youtube.model.VideoListResponse;
+import com.nan.testyoutube.util.CustomPlayerUiController;
+import com.nan.testyoutube.view.AudioVolumeSetView;
+import com.nan.testyoutube.R;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import at.huber.youtubeExtractor.VideoMeta;
 import at.huber.youtubeExtractor.YouTubeExtractor;
 import at.huber.youtubeExtractor.YtFile;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
-
-    GoogleAccountCredential mCredential;
-    private Button mCallApiButton;
-    ProgressDialog mProgress;
-    private EditText editText;
-    private RecyclerView recyclerView;
-    private PlayerView playerView;
-    private ExoPlayer player;
-    List<Data> data = new ArrayList<>();
-    Adapter adapter = new Adapter();
 
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
-
     private static final String BUTTON_TEXT = "Call YouTube Data API";
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = {YouTubeScopes.YOUTUBE_READONLY};
-
+    GoogleAccountCredential mCredential;
+    ProgressDialog mProgress;
+    List<Data> data = new ArrayList<>();
+    Adapter adapter = new Adapter();
     YouTubePlayer youTube;
+    AudioVolumeSetView audioVolumeSetView;
+    Locale locale = Locale.getDefault();
+    private Button mCallApiButton;
+    private EditText editText;
+    private RecyclerView recyclerView;
+    private PlayerView playerView;
+    private ExoPlayer player;
+    private ImageView youtubeStart;
+    private ImageView youtube_pause;
+    private com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView threeYouTubeView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,10 +123,99 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         editText = findViewById(R.id.editText);
         recyclerView = findViewById(R.id.recyclerView);
         playerView = findViewById(R.id.playerView);
+        youtubeStart = findViewById(R.id.youtube_start);
+        youtube_pause = findViewById(R.id.youtube_pause);
+        youtubeStart.setOnClickListener(v -> {
+            if (youTube != null) {
+                if (!youTube.isPlaying()) {
+                    Log.i("result", "youtubeStart");
+                    youTube.play();
+                }
+            }
+        });
+        youtube_pause.setOnClickListener(v -> {
+            if (youTube != null) {
+                if (youTube.isPlaying()) {
+                    Log.i("result", "youtube_pause");
+                    youTube.pause();
+                }
+            }
+        });
+
+        threeYouTubeView = findViewById(R.id.three_you_tube_player_view);
+        View customPlayerUi = threeYouTubeView.inflateCustomPlayerUi(R.layout.layout_youtube_controll);
+        threeYouTubeView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
+            @Override
+            public void onReady(com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer youTubePlayer) {
+                super.onReady(youTubePlayer);
+                CustomPlayerUiController customPlayerUiController = new CustomPlayerUiController(MainActivity.this, customPlayerUi, youTubePlayer, threeYouTubeView);
+                youTubePlayer.addListener(customPlayerUiController);
+                threeYouTubeView.addFullScreenListener(customPlayerUiController);
+
+                youTubePlayer.loadVideo("6JYIGclVQdw", 0);
+            }
+        });
+        getLifecycle().addObserver(threeYouTubeView);
+
+        audioVolumeSetView = findViewById(R.id.audioVolumeSetView);
 
         player = ExoPlayerFactory.newSimpleInstance(this, new DefaultRenderersFactory(this),
                 new DefaultTrackSelector(), new DefaultLoadControl());
-        player.setPlayWhenReady(true);
+        player.setPlayWhenReady(false);
+        player.addListener(new Player.EventListener() {
+            @Override
+            public void onTimelineChanged(Timeline timeline, @Nullable Object manifest, int reason) {
+                Log.i("ExoPlayer player", "timeline = " + timeline + ", manifest = " + manifest + ", reason = " + reason);
+            }
+
+            @Override
+            public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+            }
+
+            @Override
+            public void onLoadingChanged(boolean isLoading) {
+                Log.i("ExoPlayer player", "isLoading = " + isLoading);
+            }
+
+            @Override
+            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                Log.i("ExoPlayer player", "playWhenReady = " + playWhenReady + ", playbackState = " + playbackState);
+//                Player.STATE_ENDED;
+                Log.i("ExoPlayer player", "CurrentPosition = " + player.getCurrentPosition());
+            }
+
+            @Override
+            public void onRepeatModeChanged(int repeatMode) {
+                Log.i("ExoPlayer player", "repeatMode = " + repeatMode);
+            }
+
+            @Override
+            public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+                Log.i("ExoPlayer player", "shuffleModeEnabled = " + shuffleModeEnabled);
+            }
+
+            @Override
+            public void onPlayerError(ExoPlaybackException error) {
+
+            }
+
+            @Override
+            public void onPositionDiscontinuity(int reason) {
+                Log.i("ExoPlayer player", "reason = " + reason);
+            }
+
+            @Override
+            public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+
+            }
+
+            @Override
+            public void onSeekProcessed() {
+                Log.i("ExoPlayer player", "onSeekProcessed");
+            }
+        });
+
         playerView.setPlayer(player);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -126,9 +237,26 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
         YouTubePlayerFragment fragment = (YouTubePlayerFragment) getFragmentManager().findFragmentById(R.id.youtube_fragment);
         fragment.initialize("552494725055-quiibufudb983mslretos8hbqqrcf1to.apps.googleusercontent.com", new YouTubePlayer.OnInitializedListener() {
+
             @Override
             public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
                 youTube = youTubePlayer;
+                youTube.setPlaylistEventListener(new YouTubePlayer.PlaylistEventListener() {
+                    @Override
+                    public void onPrevious() {
+
+                    }
+
+                    @Override
+                    public void onNext() {
+
+                    }
+
+                    @Override
+                    public void onPlaylistEnded() {
+
+                    }
+                });
                 youTube.setPlayerStateChangeListener(new YouTubePlayer.PlayerStateChangeListener() {
                     @Override
                     public void onLoading() {
@@ -137,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
                     @Override
                     public void onLoaded(String s) {
-
+                        Log.i("onLoaded", s);
                     }
 
                     @Override
@@ -160,6 +288,10 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
                     }
                 });
+                youTube.setShowFullscreenButton(false);
+                youTube.getCurrentTimeMillis();
+                youTube.getDurationMillis();
+//                youTubePlayer.set
             }
 
             @Override
@@ -168,6 +300,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 Log.d("onInitializationFailure", "");
             }
         });
+
+//        onPlayer("http://www.youtube.com/get_video?video_id=h71sBojjcaI&t=SIGNATURE&fmt=18");
     }
 
     /**
@@ -283,9 +417,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
      *                     which is either PERMISSION_GRANTED or PERMISSION_DENIED. Never null.
      */
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         EasyPermissions.onRequestPermissionsResult(
                 requestCode, permissions, grantResults, this);
@@ -357,7 +489,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     }
 
-
     /**
      * Display an error dialog showing that Google Play Services is missing
      * or out of date.
@@ -373,6 +504,15 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 connectionStatusCode,
                 REQUEST_GOOGLE_PLAY_SERVICES);
         dialog.show();
+    }
+
+    private void onPlayer(String url) {
+        if (!TextUtils.isEmpty(url)) {
+            Uri uri = Uri.parse(url);
+            MediaSource source = new ExtractorMediaSource.Factory(new DefaultHttpDataSourceFactory("exoplayer-codelab")).createMediaSource(uri);
+            player.prepare(source);
+//                            player.seekTo(10000);
+        }
     }
 
     /**
@@ -414,37 +554,93 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             try {
                 YouTube.Search.List search = mService.search().list("id,snippet");
                 search.setKey(getString(R.string.client_id));
-                String text = "mp6E_avCnXc"; //这是一个videoid
+                String text = "mp6E_avCnXc,XDFaA9ujKwg"; //这是一个videoid
                 if (!TextUtils.isEmpty(editText.getText().toString().trim())) {
                     text = editText.getText().toString().trim();
                 }
+
+                Log.i("result", "YouTube.Videos.List id = " + search.getVideoDuration());
                 search.setQ(text);
+//                search.set
                 search.setType("video"); //搜索的类型
                 //返回的数据有哪些，根据需求自己设定
-                search.setFields("items(id/kind,id/videoId,snippet/title,snippet/thumbnails/default/url)");
-                search.setMaxResults(25L);
-//                search.setRelevanceLanguage("zh-Hans");
-
+//
+                search.setFields("items(id/kind,id/videoId,snippet/title,snippet/description," +
+                        "snippet/publishedAt,snippet/liveBroadcastContent," +
+                        "snippet/channelTitle," +
+                        "etag," +
+                        "snippet/thumbnails/default/url)");
+                search.setMaxResults(10L);
+//                Log.i("result", "Country = " + locale.getCountry());
+                search.setRegionCode(locale.getCountry());
+//                search.setRegionCode("US");
+                search.setRelevanceLanguage(locale.getLanguage());
+//                search.setLocation(locale.getCountry());
+//                search.setRelevanceLanguage(locale.getLanguage());
                 SearchListResponse response = search.execute();
                 for (SearchResult result : response.getItems()) {
                     list.add(result.getId().toString());
                     ResourceId resourceId = result.getId();
-                    //Etag = null, kind = null, id = {"kind":"youtube#video","videoId":"XDFaA9ujKwg"}, videoId= XDFaA9ujKwg, ChannelId = null
-                    //Snippet: ChannelId = null, ChannelTitle = null, Description = null, Title = 赵浴辰《可乐》谢安琪演唱版, Thumbnails = {"default":{"url":"https://i.ytimg.com/vi/XDFaA9ujKwg/default.jpg"}}, LiveBroadcastContent = null
-                    //Thumbnails Default: url = https://i.ytimg.com/vi/XDFaA9ujKwg/default.jpg, width = null, height = null
+                    //Etag = null, kind = null, id = {"kind":"youtube#video","videoId":"XDFaA9ujKwg"},
+                    // videoId= XDFaA9ujKwg, ChannelId = null
                     Log.i("result", "Etag = " + result.getEtag()
                             + ", kind = " + result.getKind()
                             + ", id = " + resourceId + ", videoId= " + resourceId.getVideoId() + ", ChannelId = " + resourceId.getChannelId());
+                    //Snippet: ChannelId = null, ChannelTitle = null
+                    // , Description = null
+                    // , Title = 赵浴辰《可乐》谢安琪演唱版
+                    // , Thumbnails = {"default":{"url":"https://i.ytimg.com/vi/XDFaA9ujKwg/default.jpg"}}
+                    // , LiveBroadcastContent = null
                     Log.i("result", "Snippet: ChannelId = " + result.getSnippet().getChannelId()
                             + ", ChannelTitle = " + result.getSnippet().getChannelTitle()
                             + ", Description = " + result.getSnippet().getDescription()
                             + ", Title = " + result.getSnippet().getTitle()
                             + ", Thumbnails = " + result.getSnippet().getThumbnails()
+                            + ", PublishedAt = " + result.getSnippet().getPublishedAt()
                             + ", LiveBroadcastContent = " + result.getSnippet().getLiveBroadcastContent());
 
+                    //Thumbnails Default: url = https://i.ytimg.com/vi/XDFaA9ujKwg/default.jpg, width = null, height = null
                     Thumbnail thumbnail = result.getSnippet().getThumbnails().getDefault();
                     Log.i("result", "Thumbnails Default: url = " + thumbnail.getUrl() + ", width = " + thumbnail.getWidth() + ", height = " + thumbnail.getHeight());
                     data.add(0, new Data(resourceId.getVideoId(), result.getSnippet().getTitle(), thumbnail.getUrl()));
+
+                    YouTube.Videos.List list1 = mService.videos().list("id,snippet,contentDetails");
+                    list1.setId(resourceId.getVideoId());
+                    list1.setFields("items(contentDetails/duration,snippet/title,contentDetails/regionRestriction)");
+                    VideoListResponse execute = list1.execute();
+                    for (Video video : execute.getItems()) {
+                        Log.i("result", "video title = " + video.getSnippet().getTitle() +
+                                ", duration = " + video.getContentDetails().getDuration());
+                        VideoContentDetailsRegionRestriction restriction = video.getContentDetails().getRegionRestriction();
+                        if (restriction == null) {
+                            Log.i("result", "restriction = null");
+                        } else {
+                            List<String> allowed = restriction.getAllowed();
+                            StringBuilder stringBuilder = new StringBuilder();
+                            for (String s : allowed) {
+                                stringBuilder.append(s).append(',');
+                            }
+                            Log.i("result", "restriction.getAllowed = " + stringBuilder.toString());
+                        }
+                    }
+                    //W/System.err:{
+                    //W/System.err:   "code" : 403,
+                    //W/System.err:   "errors" : [ {
+                    //W/System.err:     "domain" : "global",
+                    //W/System.err:     "message" : "Insufficient Permission: Request had insufficient authentication scopes.",
+                    //W/System.err:     "reason" : "insufficientPermissions"
+                    //W/System.err:   } ],
+                    //W/System.err:   "message" : "Insufficient Permission: Request had insufficient authentication scopes."
+                    //W/System.err: }
+                    //这个方法需要用户权限
+//                    YouTube.Comments.List snippet = mService.comments().list("snippet");
+//                    snippet.setId(resourceId.getVideoId());
+//                    snippet.setFields("items(snippet/authorDisplayName,snippet/textDisplay)");
+//                    CommentListResponse listResponse = snippet.execute();
+//                    for (Comment comment:listResponse.getItems()) {
+//                        Log.i("result", "name = " + comment.getSnippet().getAuthorDisplayName()
+//                        + ", TextDisplay = " + comment.getSnippet().getTextDisplay());
+//                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -526,15 +722,35 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
         @Override
         public void onBindViewHolder(@NonNull Holder holder, int i) {
-            Glide.with(MainActivity.this).load(data.get(i).getPhotoUrl()).into(holder.iv_photo);
+            //        http://img.youtube.com/vi/3vcS0cMp19s/maxresdefault.jpg
+            // 用这个地址也可以加载视频封面图片
+            Glide.with(MainActivity.this).load("http://img.youtube.com/vi/" + data.get(i).getVideoID() + "/maxresdefault.jpg").into(holder.iv_photo);
             holder.tv_name.setText(data.get(i).getVideoName());
             holder.tv_name.setOnClickListener(v -> {
+                Log.i("result", "setOnClickListener");
                 if (youTube != null) {
                     youTube.cueVideo(data.get(i).getVideoID());
                 } else {
                     Toast.makeText(holder.iv_photo.getContext(), "YouTube失败", Toast.LENGTH_SHORT).show();
                 }
+//                youtube_player_view.
+                onOther(data.get(i).getVideoID());
                 onOtherExtractor(holder, i);
+            });
+        }
+
+        private void onOther(String video_id) {
+            com.commit451.youtubeextractor.YouTubeExtractor extractor = com.commit451.youtubeextractor.YouTubeExtractor.create();
+            extractor.extract(video_id).enqueue(new Callback<YouTubeExtractionResult>() {
+                @Override
+                public void onResponse(Call<YouTubeExtractionResult> call, Response<YouTubeExtractionResult> response) {
+                    Log.i("result", "onOther = " + response.toString());
+                }
+
+                @Override
+                public void onFailure(Call<YouTubeExtractionResult> call, Throwable t) {
+                    Log.i("result", "onOther = " + t.toString());
+                }
             });
         }
 
@@ -553,18 +769,25 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                                 url = ytFiles.get(i).getUrl();
                                 //部分log： Format = Format{itag=18, ext='mp4', height=360, fps=30, vCodec=null, aCodec=null, audioBitrate=96, isDashContainer=false, isHlsContent=false}, url = https://r1---sn-ipoxu-un5s.googlevideo.com/videoplayback?expire=1566921200&ei=kP1kXZXgMIfgqQGPnpFo&ip=61.222.32.25&id=o-AAUvz8eS3dUA_gxOjfWOjUSFTwnGnmD72ivVDa3La_1K&itag=18&source=youtube&requiressl=yes&mm=31%2C29&mn=sn-ipoxu-un5s%2Csn-un57sn7s&ms=au%2Crdu&mv=m&mvi=0&pl=24&initcwndbps=1163750&mime=video%2Fmp4&gir=yes&clen=21312193&ratebypass=yes&dur=359.862&lmt=1557569508280291&mt=1566899509&fvip=5&c=WEB&txp=5531432&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cmime%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&sig=ALgxI2wwRgIhAK1NJR5va9ENHMXRwxd6ZBTj_DeFCWfTiDmIPeOqkEk2AiEAmiP32W6w7jPRMnpmstel-Tsez-GfH7D3DSTPG4ddj20%3D&lsparams=mm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AHylml4wRQIhAInqtw-eNm9EI2nyArD-kUgmooqQxPF-rQlQhNZu0VumAiA5kw2w8hGLwf_CcZM5jOpvLlxAj-lu6UNL8KXwccg2LQ%3D%3D
                                 Log.i("result", "onExtractionComplete: Format = " + ytFiles.get(i).getFormat() + ", url = " + ytFiles.get(i).getUrl());
+                            } else {
+                                Log.i("result", "ytFiles.get(i) = null, i = " + i);
                             }
                         }
+                        Log.i("result", "url = " + url);
 
                         //根据需求选择不同尺寸的视频地址去播放，我这里随便选了一个
-                        if (!TextUtils.isEmpty(url)) {
-                            Uri uri = Uri.parse(url);
-                            MediaSource source = new ExtractorMediaSource.Factory(new DefaultHttpDataSourceFactory("exoplayer-codelab")).createMediaSource(uri);
-                            player.prepare(source);
-                        }
+                        onPlayer(url);
+                    } else {
+                        Log.i("result", "没有该视频");
                     }
                 }
-            }.extract("https://www.youtube.com/watch?v=" + data.get(i).getVideoID(), true, true);
+//            }.extract("https://www.youtube.com/get_video_info?&video_id=" + data.get(i).getVideoID(), true, true);
+//            }.extract("https://www.youtube.com/watch?v=" + data.get(i).getVideoID(), true, false);
+            }.extract(data.get(i).getVideoID(), true, true);
+//            }.extract(data.get(i).getVideoID(), true, true);
+//            Uri uri = Uri.parse("https://www.youtube.com/watch?v=" + data.get(i).getVideoID());
+//            MediaSource source = new ExtractorMediaSource.Factory(new DefaultHttpDataSourceFactory("exoplayer-codelab")).createMediaSource(uri);
+//            player.prepare(source);
         }
 
         @Override

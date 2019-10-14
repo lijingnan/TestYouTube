@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.HomeActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="测试 YouTube 搜索、播放"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:onClick="openMainActivity" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="测试事件分发"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:onClick="openTestTouchEvent" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="测试 Google AdMob"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:onClick="openGoogleAdMobActivity" />
+
+    </LinearLayout>
+</ScrollView>

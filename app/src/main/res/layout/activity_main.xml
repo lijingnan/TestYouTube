@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    tools:context=".activity.MainActivity">
 
     <Button
         android:id="@+id/button"
@@ -18,7 +18,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <android.support.v7.widget.RecyclerView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -31,11 +31,24 @@
         android:gravity="center"
         android:text="PlayerView：" />
 
+    <com.nan.testyoutube.view.AudioVolumeSetView
+        android:id="@+id/audioVolumeSetView"
+        android:layout_width="match_parent"
+        android:visibility="gone"
+        android:layout_height="150dp" />
+
     <com.google.android.exoplayer2.ui.PlayerView
         android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="150dp"
+        app:resize_mode="fill"
+        android:visibility="gone"
         app:controller_layout_id="@layout/layout_controller" />
+
+    <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+        android:id="@+id/three_you_tube_player_view"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"/>
 
     <TextView
         android:layout_width="match_parent"
@@ -43,9 +56,34 @@
         android:gravity="center"
         android:text="YouTubePlayerFragment：" />
 
-    <fragment
-        android:id="@+id/youtube_fragment"
-        android:name="com.google.android.youtube.player.YouTubePlayerFragment"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="150dp" />
+        android:layout_height="wrap_content">
+
+        <fragment
+            android:id="@+id/youtube_fragment"
+            android:name="com.google.android.youtube.player.YouTubePlayerFragment"
+            android:layout_width="match_parent"
+            android:layout_height="150dp" />
+
+        <ImageView
+            android:id="@+id/youtube_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="播放"
+            android:src="@mipmap/icon_video_play"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/youtube_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginLeft="20dp"
+            android:layout_toRightOf="@+id/youtube_start"
+            android:text="暂停"
+            android:src="@mipmap/icon_video_pause" />
+
+    </RelativeLayout>
 </LinearLayout>
