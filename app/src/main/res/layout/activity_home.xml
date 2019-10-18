@@ -34,5 +34,21 @@
             android:background="?attr/selectableItemBackground"
             android:onClick="openGoogleAdMobActivity" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="测试 Web YouTube Search"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:onClick="openWebYouTubeSearchActivity" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="测试 YouTube Search 配额"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:onClick="openYouTubeQuotaActivity" />
+
     </LinearLayout>
 </ScrollView>

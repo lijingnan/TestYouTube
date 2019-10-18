@@ -37,5 +37,7 @@ public class MyClass {
         int m = (int) (a / 60);
         int s = (int) (a % 60);
         System.out.println(String.format("%d:%02d", m, s));
+
+        System.out.println("3 / 2 = " + (3 / 2));
     }
 }

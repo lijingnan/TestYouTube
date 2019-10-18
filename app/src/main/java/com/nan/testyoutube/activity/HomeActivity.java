@@ -27,4 +27,12 @@ public class HomeActivity extends AppCompatActivity {
     public void openGoogleAdMobActivity(View view) {
         startActivity(new Intent(this, GoogleAdMobActivity.class));
     }
+
+    public void openWebYouTubeSearchActivity(View view) {
+        startActivity(new Intent(this, WebYouTubeSearchActivity.class));
+    }
+
+    public void openYouTubeQuotaActivity(View view) {
+        startActivity(new Intent(this, YouTubeQuotaActivity.class));
+    }
 }

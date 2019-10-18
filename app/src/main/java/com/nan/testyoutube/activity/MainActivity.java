@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 youTubePlayer.addListener(customPlayerUiController);
                 threeYouTubeView.addFullScreenListener(customPlayerUiController);
 
-                youTubePlayer.loadVideo("6JYIGclVQdw", 0);
+//                youTubePlayer.loadVideo("6JYIGclVQdw", 0);
             }
         });
         getLifecycle().addObserver(threeYouTubeView);
