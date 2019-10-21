@@ -7,6 +7,7 @@
     tools:context=".activity.GoogleAdMobActivity">
 
     <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
@@ -14,9 +15,25 @@
         <com.google.android.gms.ads.AdView
             android:id="@+id/adView1"
             android:layout_width="match_parent"
+            android:layout_height="100dp"
+            ads:adSize="SMART_BANNER"
+            ads:adUnitId="@string/test_unit_id" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#00ff00" />
+
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/adView2"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#888888"
-            ads:adSize="BANNER"
-            ads:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+            ads:adSize="SMART_BANNER"
+            ads:adUnitId="@string/test_unit_id" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#00ff00" />
     </LinearLayout>
 </ScrollView>

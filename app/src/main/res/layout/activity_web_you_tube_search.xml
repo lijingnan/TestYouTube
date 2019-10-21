@@ -3,13 +3,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".activity.WebYouTubeSearchActivity">
 
     <TextView
-        android:id="@+id/search"
+        android:id="@+id/search_app"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="70dp"
         android:gravity="center"
-        android:text="Search"
+        android:text="Search for app"
         android:background="?attr/selectableItemBackground" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#00ff00" />
+
+    <TextView
+        android:id="@+id/search_web"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:gravity="center"
+        android:text="Search fro web"
+        android:background="?attr/selectableItemBackground" />
+
 </LinearLayout>
